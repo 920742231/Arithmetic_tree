@@ -11,7 +11,7 @@
     assert(name);\
     name->left = name->right = NULL;})
 #define isaritflags(c)  ((c == '+') || (c == '-') || (c == '*') ||\
-         (c == '/') || (c == '(') || (c == ')'))
+         (c == '/') || (c == '(') || (c == ')') || (c == '.'))
 struct tree_node {
     char * expression;
     struct tree_node * left;
@@ -20,7 +20,8 @@ struct tree_node {
 static inline int 
 illegal(char * experssion,int len){
     for(int i=0;i < len;i++){
-        if(!isdigit(experssion[i]) || !isspace(experssion[i]) || 
+        if(!isdigit(experssion[i]) || 
+            !isspace(experssion[i]) || 
             !isaritflags(experssion[i]))
             return 1;
     }
@@ -33,6 +34,14 @@ static void selfcpy(char * str,int offset){
     bzero(str,sizeof(str));
     strcpy(str,tmpstr);
 }
+static inline void illg_expression(char * str){
+    printf("%s is an illegal expression\n\r",str);
+    exit(-1);
+}
+static inline void __free(struct tree_node * node){
+    free(node->expression);
+    free(node);
+}
 static int __build(struct tree_node * t_head){
 
     int len;
@@ -44,14 +53,12 @@ static int __build(struct tree_node * t_head){
 
     //remove space at sides
     len = strlen(t_head->expression);
-    for(i = 0;i < len;i++){
+    for(i = 0;i < len;i++)
         //printf("%c\n\r",t_head->expression[i]);
         if(!isaritflags(t_head->expression[i]) &&
-             !isdigit(t_head->expression[i]) && !isspace(t_head->expression[i])){
-            printf("%s is an illegal expression\n\r",t_head->expression);
-            return -1;
-        }
-    }
+             !isdigit(t_head->expression[i]) && 
+             !isspace(t_head->expression[i]))
+            illg_expression(t_head->expression);
 
     for(i = (len - 1);i >= 0;i--)
         if(!isspace(t_head->expression[i]))
@@ -60,19 +67,26 @@ static int __build(struct tree_node * t_head){
         if(!isspace(t_head->expression[j]))
             break;
     if(i < len-1)t_head->expression[i+1] = 0;
+    //printf("before:%s\n\r",t_head->expression);
     selfcpy(t_head->expression,j);
+    //printf("after:%s\n\r",t_head->expression);
+
 
     //a number,stop recursive
     len = strlen(t_head->expression);
     tmp = 1;
-    
-    for(i = 1;i < len;i++)
-        if(!isdigit(t_head->expression[i])){
+    j = 0;
+    if(t_head->expression[0] == '.')
+        illg_expression(t_head->expression);
+    for(i = 1;i < len;i++){
+        if(t_head->expression[i] == '.')j++;
+        else if(!isdigit(t_head->expression[i])){
             tmp = 0;
             break;
         }
-    if(tmp)return 0;
-
+    }
+    if(tmp && (j < 2))return 0;
+    
     //make (...) as a part
     i = 0;
     count = 0;
@@ -81,18 +95,15 @@ loop:
         if(t_head->expression[i] == '(' && j == -1)j = i;   //first '('
         else if(t_head->expression[i] == '(')tmp++;         //inner '('
         else if(t_head->expression[i] == ')'){
-            if(j == -1){                                    //illegal ()
-                printf("%s is an illegal expression\n\r",t_head->expression);
-                return -1;
-            }
+            if(j == -1)                                     //illegal ()
+                illg_expression(t_head->expression);
             else if(tmp)tmp--;                              //inner ')'
             else break;                                     //the matched )
         }
     }
-    if(tmp){
-        printf("%s i an illegal expression\n\r",t_head->expression);
-        return -1;                                       //inner () not matching
-    }
+    if(tmp)
+        illg_expression(t_head->expression);                //inner () not matching
+
     //record position of () 
     if(j != -1){
        flag[count][0] = j;
@@ -119,9 +130,8 @@ loop:
                     strcpy(leftn->expression,"0");
                     strcpy(rightn->expression,&(t_head->expression[i+1]));
                 }
-                else if(i == (len-1)){
-                    printf("%s is an illegal expression\n\r",t_head->expression);
-                }
+                else if(i == (len-1))
+                    illg_expression(t_head->expression);
                 else{
                     strncpy(leftn->expression,t_head->expression,i);
                     strncpy(rightn->expression,&(t_head->expression[i+1]),len-i);
@@ -131,7 +141,8 @@ loop:
                 t_head->left = leftn;
                 t_head->right = rightn;
 
-                //printf("left:%s|head:%s|right:%s\n\r",leftn->expression,t_head->expression,rightn->expression);
+                //printf("left:%s|head:%s|right:%s\n\r",leftn->expression,
+                //t_head->expression,rightn->expression);
 
                 __build(leftn);
                 __build(rightn);
@@ -141,7 +152,7 @@ loop:
     }
 
     //no +or-,find *or/
-    for(i = 0;i < len;i++){
+    for(i = (len-1);i > 0;i--){
         if(t_head->expression[i] == '*' || t_head->expression[i] == '/'){
             tmp = 1;
             for(j = 0;j < count;j++){
@@ -153,10 +164,8 @@ loop:
                 Malloc(struct tree_node,rightn,1);
                 Malloc(char,leftn->expression,i+1);
                 Malloc(char,rightn->expression,len-i+1);
-                if(i == 0 || i == (len-1)){
-                    printf("%s is an illegal expression\n\r",t_head->expression);
-                    return -1;
-                }
+                if(i == 0 || i == (len-1))
+                    illg_expression(t_head->expression);
                 strncpy(leftn->expression,t_head->expression,i);
                 strncpy(rightn->expression,&(t_head->expression[i+1]),len-i);
                 sprintf(t_head->expression,"%c",t_head->expression[i]);
@@ -164,7 +173,8 @@ loop:
                 t_head->left = leftn;
                 t_head->right = rightn;
 
-                //printf("left:%s|head:%s|right:%s\n\r",leftn->expression,t_head->expression,rightn->expression);
+                //printf("left:%s|head:%s|right:%s\n\r",leftn->expression,
+                //t_head->expression,rightn->expression);
 
                 __build(leftn);
                 __build(rightn);
@@ -174,22 +184,20 @@ loop:
     }
 
     //no *or/
-    if(count > 1){
-        printf("%s is an illegal expression\n\r",t_head->expression);
-        return -1;
-    }
+    if(count > 1)illg_expression(t_head->expression);
 
     //a pair of (),remove it
-    if(flag[0][0] != 0 || flag[0][1] != (len-1)){
-        printf("%s is an illegal expression\n\r",t_head->expression);
-        return -1;
-    }
+    if(flag[0][0] != 0 || flag[0][1] != (len-1))
+        illg_expression(t_head->expression);
 
     t_head->expression[len-1] = 0;
     selfcpy(t_head->expression,1);
 
     __build(t_head);
     return 0;
+}
+void build_tree(struct tree_node * tree_head){
+    __build(tree_head);
 }
 void print_tree(struct tree_node * t_head){
     if(t_head == NULL)return;
@@ -198,7 +206,7 @@ void print_tree(struct tree_node * t_head){
     print_tree(t_head->right);
     return;
 }
-float arithmetic(struct tree_node * t_head){
+double arithmetic(struct tree_node * t_head){
     if(strcmp(t_head->expression,"+") == 0)
         return arithmetic(t_head->left) + arithmetic(t_head->right);
     else if(strcmp(t_head->expression,"-") == 0)
@@ -208,6 +216,13 @@ float arithmetic(struct tree_node * t_head){
     else if(strcmp(t_head->expression,"/") == 0)
         return arithmetic(t_head->left) / arithmetic(t_head->right);
     else return (atof(t_head->expression));
+}
+void free_tree(struct tree_node * tree_head){
+    if(tree_head == NULL)return;
+    __free(tree_head->left);
+    __free(tree_head->right);
+    __free(tree_head);
+    return;
 }
 int main(){
     int len;
@@ -221,11 +236,15 @@ int main(){
     CREATTREE(aritree);
     Malloc(char,aritree->expression,len+1);
     strcpy(aritree->expression,buff);
-    __build(aritree);
-
+    
+    build_tree(aritree);
     print_tree(aritree);
+    printf("%.20f\n",arithmetic(aritree));
 
-    printf("%f\n",arithmetic(aritree));
+    free_tree(aritree);
+
+    //test
+    //printf("%s\n\r",aritree->expression);
 
     return 0;
 }
