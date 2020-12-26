@@ -78,10 +78,10 @@ static int __build(struct tree_node * t_head){
     tmp = 1;
     j = 0;
     
-	if(t_head->expression[0] == '.')
-        illg_expression(t_head->expression);
+    if(t_head->expression[0] == '.')
+    	illg_expression(t_head->expression);
     
-	for(i = 1;i < len;i++){
+    for(i = 1;i < len;i++){
     if(t_head->expression[i] == '.')j++;
     else if(!isdigit(t_head->expression[i])){
         tmp = 0;
@@ -100,7 +100,7 @@ loop:
     else if(t_head->expression[i] == '(')tmp++;         //inner '('
     else if(t_head->expression[i] == ')'){
     //
-	if(j == -1)											//illegal ()
+    if(j == -1)											//illegal ()
         illg_expression(t_head->expression);
 	//
     else if(tmp)tmp--;									//inner ')'
@@ -156,9 +156,9 @@ loop:
 
         __build(leftn);
         __build(rightn);
-        return 0;}
-		//end if
-		}
+        return 0;}//end if
+	
+	}
 	//end if
     }
 	//end for
@@ -173,21 +173,21 @@ loop:
     if(tmp){
         struct tree_node *leftn,*rightn;
         Malloc(struct tree_node,leftn,1);        
-		Malloc(struct tree_node,rightn,1);
-		Malloc(char,leftn->expression,i+1);
-		Malloc(char,rightn->expression,len-i+1);
-		if(i == 0 || i == (len-1))
-			illg_expression(t_head->expression);
-		strncpy(leftn->expression,t_head->expression,i);
-		strncpy(rightn->expression,&(t_head->expression[i+1]),len-i);
-		sprintf(t_head->expression,"%c",t_head->expression[i]);
-		t_head->left = leftn;
-		t_head->right = rightn;
-		//printf("left:%s|head:%s|right:%s\n\r",leftn->expression,
-		//t_head->expression,rightn->expression);
-		__build(leftn);
-		__build(rightn);
-		return 0;}
+	Malloc(struct tree_node,rightn,1);
+	Malloc(char,leftn->expression,i+1);
+	Malloc(char,rightn->expression,len-i+1);
+	if(i == 0 || i == (len-1))
+	illg_expression(t_head->expression);
+	strncpy(leftn->expression,t_head->expression,i);
+	strncpy(rightn->expression,&(t_head->expression[i+1]),len-i);
+	sprintf(t_head->expression,"%c",t_head->expression[i]);
+	t_head->left = leftn;
+	t_head->right = rightn;
+	//printf("left:%s|head:%s|right:%s\n\r",leftn->expression,
+	//t_head->expression,rightn->expression);
+	__build(leftn);
+	__build(rightn);
+	return 0;}
         }
     }
 
@@ -207,20 +207,20 @@ loop:
 
 
 void build_tree(struct tree_node * tree_head){
-	__build(tree_head);
+    __build(tree_head);
 }
 
 //compute the tree's height
 int tree_height(struct tree_node * t_head){             //head of the tree
 	
 	//record the height of left and right tree
-	int lefth,righth;              
+    	int lefth,righth;              
 	//if tree head is null return 0,as height is 0
 	if(t_head == NULL)return 0;
 	//else height = max (right,leaft) + 1
 	else{
 		lefth = tree_height(t_head->left);
-		righth = tree_height(t_head->right);
+        	righth = tree_height(t_head->right);
 	}
 
 	return lefth > righth ? (lefth + 1) : (righth + 1);
@@ -286,7 +286,7 @@ void free_tree(struct tree_node * tree_head){
 }
 int main(){
     
-	int len;
+    int len;
     char buff[256];
     struct tree_node * aritree;
     
