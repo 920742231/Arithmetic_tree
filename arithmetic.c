@@ -66,6 +66,7 @@ static int __build(struct tree_node * t_head){
     for(j = 0;j < i;j++)
         if(!isspace(t_head->expression[j]))
             break;
+    if(i <= j)illg_expression(t_head->expression);
     if(i < len-1)t_head->expression[i+1] = 0;
     //printf("before:%s\n\r",t_head->expression);
     selfcpy(t_head->expression,j);
@@ -211,6 +212,32 @@ if(t_head == NULL)return 0;
 else lefth = tree_height(t_head->left),righth = tree_height(t_head->right);
 return lefth > righth ? (lefth + 1) : (righth + 1);}
 
+
+void __print_at_pos(char * str,int x,int y){
+int len = strlen(str);
+for(int i=0;i < y;i++)printf("\033[1B");
+for(int i=0;i < x;i++)printf("\033[1C");
+printf("%s",str);
+for(int i=0;i < len;i++)printf("\033[1D");
+for(int i=0;i < y;i++)printf("\033[1A");
+for(int i=0;i < x;i++)printf("\033[1D");}
+
+static void __print_node(struct tree_node * t_node,int deepth,int pos,int witch){
+int len = strlen(t_node->expression);
+if(witch)__print_at_pos(t_node->expression,pos+1,deepth*2);
+else __print_at_pos(t_node->expression,pos-len,deepth*2);
+if(t_node->left){__print_at_pos("/",pos-9,deepth*2+1);
+__print_node(t_node->left,deepth+1,pos-10,1);}
+if(t_node->right){__print_at_pos("\\",pos+9,deepth*2+1);
+__print_node(t_node->right,deepth+1,pos+10,0);}}
+
+void print_tree(struct tree_node * t_head){
+int height = tree_height(t_head);
+if(t_head == NULL)return;
+__print_node(t_head,0,height*5,0);
+for(int i=0;i < height*2;i++)printf("\033[1B");
+printf("\n\r");}
+
 double arithmetic(struct tree_node * t_head){
     if(strcmp(t_head->expression,"+") == 0)
         return arithmetic(t_head->left) + arithmetic(t_head->right);
@@ -243,8 +270,8 @@ int main(){
     strcpy(aritree->expression,buff);
     
     build_tree(aritree);
-    //print_tree(aritree);
     printf("height:%d,result:%.10f\n",tree_height(aritree),arithmetic(aritree));
+    print_tree(aritree);
 
     free_tree(aritree);
 
