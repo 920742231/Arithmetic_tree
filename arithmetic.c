@@ -113,7 +113,7 @@ loop:
     if(++i < len)goto loop;
 
     //find '+' or '-'
-    for(i = 0;i < len;i++){
+    for(i = (len-1);i > 0;i--){
         if(t_head->expression[i] == '-' || t_head->expression[i] == '+'){
             tmp = 1;
             for(j = 0;j < count;j++){
@@ -196,16 +196,21 @@ loop:
     __build(t_head);
     return 0;
 }
+
+
 void build_tree(struct tree_node * tree_head){
-    __build(tree_head);
-}
-void print_tree(struct tree_node * t_head){
-    if(t_head == NULL)return;
-    print_tree(t_head->left);
-    printf("%s\n",t_head->expression);
-    print_tree(t_head->right);
-    return;
-}
+__build(tree_head);}
+
+//compute the tree's height
+int tree_height(struct tree_node * t_head){             //head of the tree
+//record the height of left and right tree
+int lefth,righth;              
+//if tree head is null return 0,as height is 0
+if(t_head == NULL)return 0;
+//else height = max (right,leaft) + 1
+else lefth = tree_height(t_head->left),righth = tree_height(t_head->right);
+return lefth > righth ? (lefth + 1) : (righth + 1);}
+
 double arithmetic(struct tree_node * t_head){
     if(strcmp(t_head->expression,"+") == 0)
         return arithmetic(t_head->left) + arithmetic(t_head->right);
@@ -238,8 +243,8 @@ int main(){
     strcpy(aritree->expression,buff);
     
     build_tree(aritree);
-    print_tree(aritree);
-    printf("%.20f\n",arithmetic(aritree));
+    //print_tree(aritree);
+    printf("height:%d,result:%.10f\n",tree_height(aritree),arithmetic(aritree));
 
     free_tree(aritree);
 
